@@ -219,6 +219,8 @@ public final native void wait(long timeout) throws InterruptedException  // 暂�
 
 ### 为什么重写equals() 时必须重写hashCode()?
 
+- 默认实现是使用"=="运算符比较两个对象的引用是否相等，但是它可以被子类重写来提供对象内容的比较。
+
 **equals保证逻辑值是相等的，hashcode保证对象是相等的。**
 
 因为两个相等的对象的 `hashCode` 值必须是相等。也就是说如果 `equals` 方法判断两个对象是相等的，那这两个对象的 `hashCode` 值也要相等。
