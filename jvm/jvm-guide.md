@@ -180,8 +180,8 @@ ClassLoader 有loadClass（）和findClass（）方法；当加载一个类时�
 
 ### 引用类型
 
-- 强引用：内存足不足都不会被GC回收
-- 软引用：内存不足时被回收；缓存
+- 强引用：内存足不足都不会被GC回收 `User user = new User()`
+- 软引用：内存不足时被回收；常用于缓存或内存敏感的程序  `SoftReference`
 - 弱引用：不管内存足不足，被GC扫描到就被回收；ThreadLocalMap key
 - 虚引用：随时被回收，不能决定对象生命周期，用来跟踪对象被回收的活动
 
