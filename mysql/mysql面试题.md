@@ -156,20 +156,30 @@ EXPLAIN 输出可能用到的索引列和索引的类型
 
 ### 常见日志有哪些？
 
-- binary log 二进制日志：记录更改数据库的SQL语句
+- binary log 二进制日志：记录更改数据库的变化，用于数据库备份和恢复
 - 慢查询日志：执行时间超过阈值秒的查询
 - redo log 和 undo log 事务日志：重做日志和回滚日志
 - relay log 中继日志：和binary 差不多，用于主从复制的从库
 
 ### binlog 主要记录什么？
 
-主要记录数据库中数据的所有变化；
+主要记录数据库中数据的所有变化；记录了所有对数据库状态产生变化的操作，例如 INSERT、UPDATE 和 DELETE 等。
+
+statement记录的内容是`SQL`语句原文，row记录了具体的数据
+
+![image-20241013205733509](assets/image-20241013205733509.png)
 
 ### binlog 和 redolog的区别？
 
 binlog主要用于数据库还原和主从复制；redolog 主要是事务的持久性；
 
 binlog 通过追加方式写入；redolog采用循环写方式，日志满了会从头覆盖记录；
+
+
+
+redo log 它是物理日志，记录内容是“在某个数据页上做了什么修改”，属于 InnoDB 存储引擎。
+
+而 binlog 是逻辑日志，记录内容是语句的原始逻辑，类似于“给 ID=2 这一行的 c 字段加 1”，属于`MySQL Server` 层。
 
 ### redo log如何保证事务的持久性？
 
@@ -228,13 +238,15 @@ InnoDB默认是临建锁，但是索引如果是主键或唯一索引，会降�
 
 表级锁和行级锁都有S锁和X锁；共享锁就是读操作允许多个事务获取锁，共享读；排他锁不允许多个事务同时获取；
 
-select 添加共享锁：SELECT ... FOR SHARE;
+select 添加共享锁：SELECT ... LOCK IN SHARE MODE;
 
 select 添加排他锁：SELECT ... FOR UPDATE;
 
 增删改自动加排他锁；
 
 ### 意向锁有什么作用？
+
+数据库在加锁时可以更高效地判断当前事务的意图，从而避免不必要的锁等待。提高并发性，减少死锁
 
 意向锁是表级锁；有IS锁和IX锁；一行行遍历记录是否加锁太慢，用意向锁表示是否能加表级锁：
 **意向锁是由数据引擎自己维护的，用户无法手动操作意向锁，在为数据行加共享/排他锁之前，InooDB 会先获取该数据行所在在数据表的对应意向锁。**
@@ -289,7 +301,7 @@ MVCC由隐藏字段、undo log和readview实现
 ### MVCC + next-key Lock解决幻读
 
 1. 执行select 后根据MVCC 快照读的方式实现了可重复读和快照读下的幻读
-2. 使用 next-key Lock 来锁住间隙，防止其他事务在查询范围内插入；(使用 select for update/share in mode 增删改加锁)
+2. 使用 next-key Lock 来锁住间隙，防止其他事务在查询范围内插入；(使用 select for update/lock in share mode 增删改加锁)
 
 ## 读写分离和分库分表
 
@@ -303,7 +315,7 @@ MVCC由隐藏字段、undo log和readview实现
 
 从库会创建一个 I/O 线程向主库请求更新的 binlog
 
-主库会创建一个 binlog dump 线程来发送 binlog ，从库中的 I/O 线程负责接收
+主库会创建一个 binlog dump （导出）线程来发送 binlog ，从库中的 I/O 线程负责接收
 
 从库的 I/O 线程将接收的 binlog 写入到 relay log 中。
 
